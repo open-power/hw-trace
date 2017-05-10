@@ -430,39 +430,37 @@ static void show_usage(void)
 {
 	printf("Htm tool for open power\n\n");
 	printf("Basic Commands:\n");
-	printf("--allocate - (once per boot) reserve memory on each chip for htm tracing\n");
-	printf("	--memsize=<size> - amount of memory to reserve on each chip\n");
-	printf("			   for example 32M, or 16G\n\n");
-	printf("--mode=<fabric|llat> - specify whether to perform a fabric or llat trace \n");
-	printf("--list_cpus - display system cpu's numa information.  This is important \n");
-	printf("	      since Nest HTM(NHTM) is by chip, and core htm(CHTM) is by core\n");
-	printf("--setup - initialize trace registers with specified values\n");
-	printf("	--ex=<core_number> - which core to execute command against \n\n");
-	printf("	[--cpu|-c] <cpu> - which chip to execute command against \n");
-	printf("	--nowrap [optional] - don't wrap once trace buffer is full.\n");
-	printf("	--precise [optional] - turn on precise mode and stop cresp gathering\n\n");
-	printf("--start - start htm trace\n");
-	printf("	--ex=<core_number> - which core to execute command against \n\n");
-	printf("	--cpu=<cpu> - which chip to execute command against \n\n");
-	printf("--start_mtspr - start htm trace using mtspr trigger instead of scoms \n\n");
-	printf("--stop - stop trace and put it in COMPLETE state\n");
-	printf("	--cpu=<cpu> - which chip to execute command against \n\n");
-	printf("--stop_mtspr - stop htm trace using mtspr trigger instead of scoms \n\n");
-	printf("--reset - reset trace from COMPLETE to READY state\n");
-	printf("	--cpu=<cpu> - which chip to execute command against \n\n");
-	printf("--mark=<marker> - puts marker in trace data where <marker> is any\n");
-	printf("                  10 bit value\n\n");
-	printf("--status - gather the status of htm\n");
-	printf("	--cpu=<cpu> - which chip to execute command against \n");
-	printf("	--ex=<core_number> - which core to execute command against \n\n");
-	printf("--dump - dump all or part of trace to a file\n");
-	printf("	--cpu=<cpu> - which chip to execute command against \n");
-	printf("	--ex=<core_number> - which core to execute command against \n");
-	printf("	--filename=<filename> - file to dump htm trace to \n");
-	printf("	--size=<size> [optional] - dump only specified amount of\n");
-	printf("				   trace starting from end\n");
-	printf("	--head [optional] - dump <size> amount starting at beginning of storage\n\n");
-	printf("[--verbose|-v]  dump all or part of trace to a file\n");
+	printf("--allocate		 (once per boot) reserve memory on each chip for htm tracing\n");
+	printf("	--memsize=<size>		 - amount of memory to reserve on each chip for\n");
+	printf("							example 32M, or 16G\n\n");
+	printf("--mode=<fabric|llat>\t specify whether to perform a fabric or llat trace \n\n");
+	printf("--list_cpus		 display system cpu's numa information.  This is important \n");
+	printf("	           \t since Nest HTM(NHTM) is by chip, and core htm(CHTM) is by core\n\n");
+	printf("--setup			initialize trace registers with specified values\n");
+	printf("	--ex=<core_number>		- which core to execute command against \n");
+	printf("	-c|-cpu <cpu>			- which chip to execute command against \n");
+	printf("	[--nowrap]			- don't wrap once trace buffer is full.\n");
+	printf("	[--precise] 			- turn on precise mode and stop cresp gathering\n\n");
+	printf("--start			 start htm trace\n");
+	printf("	--ex=<core_number>		- which core to execute command against \n");
+	printf("	--cpu=<cpu>			- which chip to execute command against \n\n");
+	printf("--start_mtspr		 start htm trace using mtspr trigger instead of scoms \n\n");
+	printf("--stop			 stop trace and put it in COMPLETE state\n");
+	printf("	--cpu=<cpu>			- which chip to execute command against \n\n");
+	printf("--stop_mtspr		 stop htm trace using mtspr trigger instead of scoms \n\n");
+	printf("--reset			 reset trace from COMPLETE to READY state\n");
+	printf("	--cpu=<cpu>			- which chip to execute command against \n\n");
+	printf("--mark=<marker>		 puts marker in trace data where <marker> is any 10 bit value\n\n");
+	printf("--status		 gather the status of htm\n");
+	printf("	--cpu=<cpu>			- which chip to execute command against \n");
+	printf("	--ex=<core_number>		- which core to execute command against \n\n");
+	printf("--dump			 dump all or part of trace to a file\n");
+	printf("	--cpu=<cpu> 			- which chip to execute command against \n");
+	printf("	--ex=<core_number>		- which core to execute command against \n");
+	printf("	--filename=<filename>		- file to dump htm trace to \n");
+	printf("	[--size=<size>]			- dump only specified amount of trace starting from end\n");
+	printf("	[--head]			- dump <size> amount starting at beginning of storage\n\n");
+	printf("-v|--verbose		 dump all or part of trace to a file\n");
 
 }
 
@@ -654,6 +652,8 @@ int main(int argc, char *argv[])
 			ERR("Allocation has already been done on this machine \n");
 			exit(1);
 		}
+		if (memory_size == -1)
+			memory_size = DEFAULT_SIZE;
 		htm_allocate(memory_size);
 		exit(0);	
 	

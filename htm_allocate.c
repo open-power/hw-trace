@@ -21,6 +21,8 @@ int htm_allocate(uint64_t i_mem_size)
         char nbuf[strlen(MEMTRACE_DIR)+16];
         char buf[20];
 
+	printf("mem size %d\n", i_mem_size);
+
 	sprintf(buf,"%"PRIu64, i_mem_size);
         snprintf(nbuf, sizeof(nbuf), "%s/%s", MEMTRACE_DIR, "enable");
         fd = open(nbuf, O_WRONLY);
