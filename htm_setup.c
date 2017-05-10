@@ -18,41 +18,41 @@
 
 uint64_t parse_mem_size(uint64_t i_memsize, bool *i_use_small_mem)
 {
-        uint64_t memsize;
-        *i_use_small_mem=false;
-        char buf[20];
-        memsize = i_memsize / MEG;
-        if (memsize < 1024){
-                snprintf(buf, sizeof buf, "%"PRIu64, memsize);
-                strcat(buf,"M");
-                DBG("memsize %s\n",buf);
-        }else{
-                memsize = memsize / 1024;
-                snprintf(buf, sizeof buf, "%"PRIu64, memsize);
-                strcat(buf,"G");
-        }
+	uint64_t memsize;
+	*i_use_small_mem=false;
+	char buf[20];
+	memsize = i_memsize / MEG;
+	if (memsize < 1024){
+		snprintf(buf, sizeof buf, "%"PRIu64, memsize);
+		strcat(buf,"M");
+		DBG("memsize %s\n",buf);
+	}else{
+		memsize = memsize / 1024;
+		snprintf(buf, sizeof buf, "%"PRIu64, memsize);
+		strcat(buf,"G");
+	}
 
-        if (strcasecmp(buf, "16M") == 0) {memsize = HTM_512M_OR_16M;*i_use_small_mem=true;}
-        else if (strcasecmp(buf, "32M") == 0) {memsize = HTM_512M_OR_16M;*i_use_small_mem=true;}
-        else if (strcasecmp(buf, "32M") == 0) {memsize = HTM_1G_OR_32M;*i_use_small_mem=true;}
-        else if (strcasecmp(buf, "64M") == 0) {memsize = HTM_2G_OR_64M;*i_use_small_mem=true;}
-        else if (strcasecmp(buf, "128M") == 0) {memsize = HTM_4G_OR_128M;*i_use_small_mem=true;}
-        else if (strcasecmp(buf, "256M") == 0) {memsize = HTM_8G_OR_256M;*i_use_small_mem=true;}
-        else if (strcasecmp(buf, "512M") == 0) {memsize = HTM_512M_OR_16M;}
-        else if (strcasecmp(buf, "1G") == 0) {memsize = HTM_1G_OR_32M;}
-        else if (strcasecmp(buf, "2G") == 0) {memsize = HTM_2G_OR_64M;}
-        else if (strcasecmp(buf, "4G") == 0) {memsize = HTM_4G_OR_128M;}
-        else if (strcasecmp(buf, "8G") == 0) {memsize = HTM_8G_OR_256M;}
-        else if (strcasecmp(buf, "16G") == 0) {memsize = HTM_16G_OR_512M;}
-        else if (strcasecmp(buf, "32G") == 0) {memsize = HTM_32G_OR_1G;}
-        else if (strcasecmp(buf, "64G") == 0) {memsize = HTM_64G_OR_2G;}
-        else if (strcasecmp(buf, "128G") == 0) {memsize = HTM_128G_OR_4G;}
-        else if (strcasecmp(buf, "256G") == 0) {memsize = HTM_256G_OR_8G;}
-        else {
-                 fprintf(stderr, "Failed to find a valid memory configuration for %s \n",buf);
-                exit(1);
-        }
-        return memsize;
+	if (strcasecmp(buf, "16M") == 0) {memsize = HTM_512M_OR_16M;*i_use_small_mem=true;}
+	else if (strcasecmp(buf, "32M") == 0) {memsize = HTM_512M_OR_16M;*i_use_small_mem=true;}
+	else if (strcasecmp(buf, "32M") == 0) {memsize = HTM_1G_OR_32M;*i_use_small_mem=true;}
+	else if (strcasecmp(buf, "64M") == 0) {memsize = HTM_2G_OR_64M;*i_use_small_mem=true;}
+	else if (strcasecmp(buf, "128M") == 0) {memsize = HTM_4G_OR_128M;*i_use_small_mem=true;}
+	else if (strcasecmp(buf, "256M") == 0) {memsize = HTM_8G_OR_256M;*i_use_small_mem=true;}
+	else if (strcasecmp(buf, "512M") == 0) {memsize = HTM_512M_OR_16M;}
+	else if (strcasecmp(buf, "1G") == 0) {memsize = HTM_1G_OR_32M;}
+	else if (strcasecmp(buf, "2G") == 0) {memsize = HTM_2G_OR_64M;}
+	else if (strcasecmp(buf, "4G") == 0) {memsize = HTM_4G_OR_128M;}
+	else if (strcasecmp(buf, "8G") == 0) {memsize = HTM_8G_OR_256M;}
+	else if (strcasecmp(buf, "16G") == 0) {memsize = HTM_16G_OR_512M;}
+	else if (strcasecmp(buf, "32G") == 0) {memsize = HTM_32G_OR_1G;}
+	else if (strcasecmp(buf, "64G") == 0) {memsize = HTM_64G_OR_2G;}
+	else if (strcasecmp(buf, "128G") == 0) {memsize = HTM_128G_OR_4G;}
+	else if (strcasecmp(buf, "256G") == 0) {memsize = HTM_256G_OR_8G;}
+	else {
+		fprintf(stderr, "Failed to find a valid memory configuration for %s \n",buf);
+		exit(1);
+	}
+	return memsize;
 }
 
 int wait_until_ready(uint32_t i_target, int i_htm_type)
@@ -62,78 +62,76 @@ int wait_until_ready(uint32_t i_target, int i_htm_type)
 	timer=0;
 	do {
 		rc=htm_read_xscom(i_target, HTM_STAT, i_htm_type, &data);
-        	if (rc) {
-                	ERR("xscom HTM_MEM read failed, rc=%d\n", rc);
-	                return -1;
-        	}
+		if (rc) {
+			ERR("xscom HTM_MEM read failed, rc=%d\n", rc);
+			return -1;
+		}
 		timer++;
 		sleep(1);
 		if(timer == MAX_TIMEOUT){
 			ERR("Timed out waiting for HTM_STAT_READY");
 			return -1;
 		}
-	printf("DATA RECEIVED %llx \n", data);
-	}while(!(data & HTM_STAT_READY));
+		printf("DATA RECEIVED %llx \n", data);
+	} while(!(data & HTM_STAT_READY));
 	printf("Congratulations, HTM has reached ready state\n");
 	return 0;
 }
 
 int set_htm_mem(uint32_t i_target, int i_htm_type, uint64_t i_mem_base, uint64_t i_mem_size, bool i_use_small_mem_size)
 {
-        /* Prepare to set HTM_MEM register */
+	/* Prepare to set HTM_MEM register */
 	int rc;
-        uint64_t data;
+	uint64_t data;
 	printf("Target is still %d \n", i_htm_type);
 	/*First we need to ensure HTM_MEM_ALLOC=0*/
 	rc=htm_read_xscom(i_target, HTM_MEM, i_htm_type, &data);
-        if (rc) {
+	if (rc) {
 		ERR("1xscom HTM_MEM read failed, rc=%d\n", rc);
-                return -1;
-        }
+		return -1;
+	}
 
 	/* initially set HTM_MEM_ALLOC to 0.  The transition to 1 will notify
 	   htm that the trace memory information has been updated            */
 	data &= ~HTM_MEM_ALLOC; 
-        rc=htm_write_xscom(i_target, HTM_MEM, i_htm_type, data);
-        if (rc) {
+	rc=htm_write_xscom(i_target, HTM_MEM, i_htm_type, data);
+	if (rc) {
 		ERR("1xscom HTM_MEM write failed, rc=%d\n", rc);
-                return -1;
-        }
-	
+		return -1;
+	}
+
 	data = 0;
 	/* Read scom back after setting the HTM_MEM_ALLOC off */
 	rc=htm_read_xscom(i_target, HTM_MEM, i_htm_type, &data);
-        if (rc) {
+	if (rc) {
 		ERR("2xscom HTM_MEM read failed, rc=%d\n", rc);
-                return -1;
-        }
+		return -1;
+	}
 
-        if (i_use_small_mem_size){
-        /*      rc=htm_read_xscom(i_ex_target, HTM_MEM, i_htm_type, &data);*/
-                DBG("Using Small Memory \n");
-                data |= HTM_MEM_SIZE_SMALL;
-        }
-        else{   DBG("Using Large Memory \n");}
+	if (i_use_small_mem_size){
+		 /*      rc=htm_read_xscom(i_ex_target, HTM_MEM, i_htm_type, &data);*/
+		DBG("Using Small Memory \n");
+		data |= HTM_MEM_SIZE_SMALL;
+	} else {
+		DBG("Using Large Memory \n");}
+	data = SETFIELD(HTM_MEM_BASE, data, (i_mem_base>>24));
+	data = SETFIELD(HTM_MEM_SIZE, data, i_mem_size);
+	data |= HTM_MEM_ALLOC;
 
-        data = SETFIELD(HTM_MEM_BASE, data, (i_mem_base>>24));
-        data = SETFIELD(HTM_MEM_SIZE, data, i_mem_size);
-        data |= HTM_MEM_ALLOC;
-
-        rc=htm_write_xscom(i_target, HTM_MEM, i_htm_type, data);
-        if (rc) {
+	rc=htm_write_xscom(i_target, HTM_MEM, i_htm_type, data);
+	if (rc) {
 		ERR("xscom HTM_MEM write failed, rc=%d\n", rc);
-                return -1;
-        }
+		return -1;
+	}
 	rc=htm_read_xscom(i_target, HTM_MEM, i_htm_type, &data);
-        if (rc) {
+	if (rc) {
 		ERR("xscom HTM_MEM read failed, rc=%d\n", rc);
-                return -1;
-        }
-/*	printf("After it all HTM_MEM is %"PRIx64"\n",data);*/
+		return -1;
+	}
+	/*	printf("After it all HTM_MEM is %"PRIx64"\n",data);*/
 	return 0;
-
-
 }
+
 int update_mcs_regs(uint32_t i_target, uint32_t reserve_queue)
 {
 	int rc;

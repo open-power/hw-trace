@@ -50,89 +50,88 @@ struct cpu cpus[MAX_NR_CPUS];
 
 static int32_t get_cpu_hw_no(int cpu_no)
 {
-        char *fp;
-        FILE *hwidf;
-        int n, hwid;
+	char *fp;
+	FILE *hwidf;
+	int n, hwid;
 
-        n = asprintf(&fp, "/sys/devices/system/cpu/cpu%d/physical_id", cpu_no);
-        if (n < 0) {
-                perror("asprintf failure !");
-                exit(1);
-        }
-        hwidf = fopen(fp, "r");
-        if (!hwidf) {
-                fprintf(stderr, "Failed to open cpu %d physical_id\n", cpu_no);
-                exit(1);
-        }
-        n = fscanf(hwidf, "%u", &hwid);
-        if (n <= 0) {
-                fprintf(stderr, "Failed to read cpu %d physical_id\n", cpu_no);
-                exit(1);
-        }
-        fclose(hwidf);
-        free(fp);
+	n = asprintf(&fp, "/sys/devices/system/cpu/cpu%d/physical_id", cpu_no);
+	if (n < 0) {
+		perror("asprintf failure !");
+		exit(1);
+	}
+	hwidf = fopen(fp, "r");
+	if (!hwidf) {
+		fprintf(stderr, "Failed to open cpu %d physical_id\n", cpu_no);
+		exit(1);
+	}
+	n = fscanf(hwidf, "%u", &hwid);
+	if (n <= 0) {
+		fprintf(stderr, "Failed to read cpu %d physical_id\n", cpu_no);
+		exit(1);
+	}
+	fclose(hwidf);
+	free(fp);
 
-        return hwid;
+	return hwid;
 }
 
 
 static void add_cpu(int cpu_no)
 {
-        struct cpu *c;
+	struct cpu *c;
 
-        if (nr_cpus <= cpu_no)
-                nr_cpus = cpu_no + 1;
-        if (nr_cpus > MAX_NR_CPUS) {
-                fprintf(stderr, "Too many CPUs !\n");
-                exit(1);
-        }
-        c = &cpus[cpu_no];
-        c->present = true;
-        c->hw_no = get_cpu_hw_no(cpu_no);
-        c->chip_id = c->hw_no >> 7;
-        c->ex_target = c->hw_no >> 3;
-        c->thread0 = (c->hw_no & 7) == 0;
+	if (nr_cpus <= cpu_no)
+	        nr_cpus = cpu_no + 1;
+	if (nr_cpus > MAX_NR_CPUS) {
+		fprintf(stderr, "Too many CPUs !\n");
+		exit(1);
+	}
+	c = &cpus[cpu_no];
+	c->present = true;
+	c->hw_no = get_cpu_hw_no(cpu_no);
+	c->chip_id = c->hw_no >> 7;
+	c->ex_target = c->hw_no >> 3;
+	c->thread0 = (c->hw_no & 7) == 0;
 
 }
 
 
 static void init_cpus(void)
 {
-        FILE *onlnf;
-        int n, cpu, prev;
-        char sep;
+	FILE *onlnf;
+	int n, cpu, prev;
+	char sep;
 	printf("Entering init_cpus\n");
-        onlnf = fopen("/sys/devices/system/cpu/online", "r");
-        if (!onlnf) {
-                fprintf(stderr, "Failed to open online CPU map\n");
-                exit(1);
-        }
-        sep = 0;
-        prev = -1;
-        cpu = 0;
-        for (;;) {
-                n = fscanf(onlnf, "%u%c", &cpu, &sep);
-                if (n <= 0)
-                        break;
-                if (prev >= 0) {
-                        while (++prev < cpu)
-                                add_cpu(prev);
-                }
-                add_cpu(cpu);
-                if (n == 2 && sep == '-')
-                        prev = cpu;
-                else
-                        prev = -1;
-                if (n == 1 || sep == '\n')
-                        break;
-        }
-        fclose(onlnf);
+	onlnf = fopen("/sys/devices/system/cpu/online", "r");
+	if (!onlnf) {
+		fprintf(stderr, "Failed to open online CPU map\n");
+		exit(1);
+	}
+	sep = 0;
+	prev = -1;
+	cpu = 0;
+	for (;;) {
+		n = fscanf(onlnf, "%u%c", &cpu, &sep);
+		if (n <= 0)
+			break;
+		if (prev >= 0) {
+			while (++prev < cpu)
+				add_cpu(prev);
+		}
+		add_cpu(cpu);
+		if (n == 2 && sep == '-')
+			prev = cpu;
+		else
+			prev = -1;
+		if (n == 1 || sep == '\n')
+			break;
+	}
+	fclose(onlnf);
 }
 
 
 static void show_cpus_info()
 {
-
 	int i;
 	uint32_t old_chip_id=-1;
 	for (i = 0; i< nr_cpus; i++){
@@ -152,76 +151,84 @@ static void show_cpus_info()
 	printf("\n");
 
 }
+
 int enable_core_mtspr(uint32_t i_chip_id)
 {
-        int i, rc;
+	int i, rc;
 	uint32_t core_touched = -1;
 	printf("Entering enable_core_mtspr\n");
-        for (i = 0; i < nr_cpus; i++){
-                struct cpu *c = &cpus[i];
-			DBG("Reading core %d \n", c->ex_target &  0xf);
-                if (c->present && (i_chip_id == c->chip_id) && (core_touched != c->ex_target)){
-                       	uint64_t data;
+	for (i = 0; i < nr_cpus; i++){
+		struct cpu *c = &cpus[i];
+		DBG("Reading core %d \n", c->ex_target &  0xf);
+		if (c->present && (i_chip_id == c->chip_id) && (core_touched != c->ex_target)){
+			uint64_t data;
 
 			/* Step 1 turn on clocks in htm logic in NCU to allow
-			   forwarding of MTSPR Trace commands to Power Bus*/
-                       	rc=xscom_read_ex(c->ex_target, NCU_MODE_REG, &data);
-	                if (rc) {
-				
-                        	ERR("xscom NCU_MODE_REG for chip %d core %d read failed, rc=%d\n", c->chip_id, c->ex_target, rc);
-                        	return -1;
-           		}
+			forwarding of MTSPR Trace commands to Power Bus*/
+			rc=xscom_read_ex(c->ex_target, NCU_MODE_REG, &data);
+			if (rc) {
+				ERR("xscom NCU_MODE_REG for chip %d core %d read failed, rc=%d\n", c->chip_id, c->ex_target, rc);
+				return -1;
+			}
 
 			data = data | HTM_ENABLE;
 
 			printf("I'm writing to %d data %llu \n", NCU_MODE_REG, data);
 			rc=xscom_write_ex(c->ex_target, NCU_MODE_REG, data);
 			DBG("Flipping HTM_ENABLE bit in NCU_MODE_REG \n");
-                        if (rc) {
-                                ERR("xscom NCU_MODE_REG write failed, rc=%d\n", rc);
-                                return -1;
-                        }
+			if (rc) {
+				ERR("xscom NCU_MODE_REG write failed, rc=%d\n", rc);
+				return -1;
+			}
 
 
 			/* Step 2 Enable Triggering and Marking in EX chiplets*/
 			rc=xscom_read_ex(c->ex_target, CHTM_BASE+HTM_CTRL, &data);
 			if (rc) {
-                        	ERR("xscom CHTM_HTM_CTRL read failed, rc=%d\n", rc);
-                        	return -1;
-                        }
+				ERR("xscom CHTM_HTM_CTRL read failed, rc=%d\n", rc);
+				return -1;
+			}
 
 			data = data | HTM_CTRL_MTSPR_TRIG | HTM_CTRL_MTSPR_MARK;
 			data = SETFIELD(HTM_CTRL_TRIG, data, 0b10);
 			data = SETFIELD(HTM_CTRL_MARK, data, 0b10);
 			DBG("Final data looks like 0x%"PRIx64" \n", data);
 
-                        DBG("Enabling MTSPR capabilities in CHTM_CTRL REG \n");
-                        rc=xscom_write_ex(c->ex_target, CHTM_BASE+HTM_CTRL, data);
-                        if (rc) {
-                                ERR("xscom CHTM_CTRL write failed, rc=%d\n", rc);
-                                return -1;
-                        }
+			DBG("Enabling MTSPR capabilities in CHTM_CTRL REG \n");
+			rc=xscom_write_ex(c->ex_target, CHTM_BASE+HTM_CTRL, data);
+			if (rc) {
+				ERR("xscom CHTM_CTRL write failed, rc=%d\n", rc);
+				return -1;
+			}
 
 			/* only scom each core once */
 			core_touched = c->ex_target;
-                }
-        }
+		}
+	}
 	return 0;
 }
 
 
 /*HACK TO CONVERT TO HANDLE xscom's need for chip2 and chip 3 to be x10 and x11*/
-int convert_chip(int cpu){
+int convert_chip(int cpu)
+{
 	if (cpu == 2) return 16;
 	else if (cpu == 3) return 17;
 	else return cpu;
 }
 
-uint64_t convert_memory(const char *arg){
-
-	char size[5];
+uint64_t convert_memory(const char *arg)
+{
+	char size[6];
 	char type[2];
 	uint64_t memory_size;
+
+	if (strlen(arg) > 5) {
+		ERR("Please convert your number so that it is 4digits + <M/G> because even"
+		" though I am a computer, I ain't dealing with that \n");
+		exit(1);
+	}
+
 	strcpy(type, arg+strlen(arg)-1);
 	strcpy(size, arg);
 	size[strlen(size)-1]='\0';
@@ -229,11 +236,11 @@ uint64_t convert_memory(const char *arg){
 
 	if ((strcasecmp(type, "M") == 0) || (strcasecmp(arg, "m") == 0)){
 		memory_size = memory_size*MB;
-	}else if ((strcasecmp(type, "G") == 0) || (strcasecmp(arg, "g") == 0)){
+	} else if ((strcasecmp(type, "G") == 0) || (strcasecmp(arg, "g") == 0)){
 		memory_size = memory_size*GB;
-	}else if ((strcasecmp(type, "K") == 0) || (strcasecmp(arg, "k") == 0)){
+	} else if ((strcasecmp(type, "K") == 0) || (strcasecmp(arg, "k") == 0)){
 		memory_size = memory_size*KB;
-	}else{
+	} else {
 		ERR("You have selected an invalid memory configuration Must end in M or G\n");
 		exit(1);
 	}
@@ -262,81 +269,70 @@ uint64_t convert_memory(const char *arg){
 
 }
 
-static void get_active_chips(){
+static void get_active_chips()
+{
 	int rc;
 	rc = access(MEMTRACE_DIR"/"MEMTRACE_C0"/", F_OK);
-	if(rc == 0){
+	if (rc == 0){
 		active_chip_mask |= 0b0001;
 	}
 	rc = access(MEMTRACE_DIR"/"MEMTRACE_C1"/", F_OK);
-	if(rc == 0){
+	if (rc == 0){
 		active_chip_mask |= 0b0010;
 	}
 	rc = access(MEMTRACE_DIR"/"MEMTRACE_C8"/", F_OK);
-	if(rc == 0){
+	if (rc == 0){
 		active_chip_mask |= 0b10000;
 	}
 	rc = access(MEMTRACE_DIR"/"MEMTRACE_C10"/", F_OK);
-	if(rc == 0){
+	if (rc == 0){
 		active_chip_mask |= 0b0100;
 	}
 	rc = access(MEMTRACE_DIR"/"MEMTRACE_C11"/", F_OK);
-	if(rc == 0){
+	if (rc == 0){
 		active_chip_mask |= 0b1000;
 	}
 }
 
-static bool is_memory_allocated(){
+static bool is_memory_allocated()
+{
 	if (active_chip_mask == 0)
 		return false;
 	else
 		return true;
 }
 
-bool is_chip_active(int i_target){
+bool is_chip_active(int i_target)
+{
 	uint32_t cpu = i_target >> 4;
-	if (cpu == 0){
-		if (active_chip_mask & 0b0001)
+	if ((cpu == 0) && (active_chip_mask & 0b0001))
 			return true;
-		else
-			return false;
-	}else if(cpu == 1){
-		if (active_chip_mask & 0b0010)
+	else if ((cpu == 1) && (active_chip_mask & 0b0010))
 			return true;
-		else
-			return false;
-	}else if(cpu == 8){
-		if (active_chip_mask & 0b10000)
+	else if ((cpu == 8) && (active_chip_mask & 0b10000))
 			return true;
-		else
-			return false;
-	}else if(cpu == 16){
-		if (active_chip_mask & 0b0100)
+	else if ((cpu == 16) && (active_chip_mask & 0b0100))
 			return true;
-		else
-			return false;
-	}else if(cpu == 17){
-		if (active_chip_mask & 0b1000)
+	else if ((cpu == 17) && (active_chip_mask & 0b1000))
 			return true;
-		else
-			return false;
-	}
 	else
 		return false;
-	}
-
-static int32_t memtrace_compatability(){
-        int rc = access(MEMTRACE_DIR, F_OK);
-        if(rc == -1){
-		if (errno == ENOENT){
-                	fprintf(stderr, "Failed to find directory "MEMTRACE_DIR"cannot continue\n ");
-                	exit(1);
-		}
-        }
-        return 0;
 }
 
-uint64_t prepare_and_call_setup(struct htm_args i_args){
+static int32_t memtrace_compatability()
+{
+	int rc = access(MEMTRACE_DIR, F_OK);
+	if(rc == -1){
+		if (errno == ENOENT){
+			fprintf(stderr, "Failed to find directory "MEMTRACE_DIR"cannot continue\n ");
+			exit(1);
+		}
+	}
+	return 0;
+}
+
+uint64_t prepare_and_call_setup(struct htm_args i_args)
+{
 	bool filter = false;
 	int rc = 0;
 	if (!is_memory_allocated()){
@@ -344,52 +340,53 @@ uint64_t prepare_and_call_setup(struct htm_args i_args){
 		htm_allocate(DEFAULT_SIZE);
 	}
 	/* Reread sysfs to see if chip is now in list*/
-        get_active_chips();
+	get_active_chips();
 	if (!is_chip_active(i_args.target)){
 		ERR("Chip %d is not active on this machine \n",i_args.target);
 		exit(1);
 	}
-	
+
 	enable_core_mtspr(i_args.target);
-		/*rc=htm_setup(cpu_no, htm_type, nowrap, precise);*/
+	/*rc=htm_setup(cpu_no, htm_type, nowrap, precise);*/
 	rc=htm_setup(i_args);
 	if (rc) {
-        	ERR("htm_setup failed, rc=%d\n", rc);
-        	return -1;
+		ERR("htm_setup failed, rc=%d\n", rc);
+		return -1;
 	}
 	/* For now filter every go  but needs to be after setup so it doesn't get overwritten*/
 	rc=htm_filter(filter, i_args.target, i_args.htm_type);
 	if (rc) {
-       		ERR("htm_filter failed, rc=%d\n", rc);
-       		return -1;
-        }
+		ERR("htm_filter failed, rc=%d\n", rc);
+		return -1;
+	}
 	return 0;
 }
 
-uint64_t prepare_and_call_start(struct htm_args i_args){
+uint64_t prepare_and_call_start(struct htm_args i_args)
+{
 	int rc = 0;
 	uint64_t status_reg = get_htm_status_reg(i_args.target, i_args.htm_type);
 
 	/* figure out how much hasn't been done */
-		/* No memory allocated...start here */
-		if (!is_memory_allocated()){
-			printf("No Active allocations detected.  Setting default size of 256MB \n");
-			htm_allocate(DEFAULT_SIZE);
-		}
+	/* No memory allocated...start here */
+	if (!is_memory_allocated()){
+		printf("No Active allocations detected.  Setting default size of 256MB \n");
+		htm_allocate(DEFAULT_SIZE);
+	}
 
-		/* We are uninitialized run htm_setup */
-		if (status_reg == 0){
-			prepare_and_call_setup(i_args);
-		/* If we are in complete mode, issue reset */
-		}else if (status_reg & HTM_STAT_COMPLETE){
-	                rc=htm_reset(i_args.target, i_args.htm_type);
-        	        if (rc) {
-                        	ERR("htm_reset failed, rc=%d\n", rc);
-                        	return -1;
-                	}else{
-                        	printf("HTM successfully Reset \n");
-                	}
+	/* We are uninitialized run htm_setup */
+	if (status_reg == 0){
+		prepare_and_call_setup(i_args);
+	/* If we are in complete mode, issue reset */
+	} else if (status_reg & HTM_STAT_COMPLETE){
+    	rc=htm_reset(i_args.target, i_args.htm_type);
+		if (rc) {
+			ERR("htm_reset failed, rc=%d\n", rc);
+		return -1;
+		} else {
+			printf("HTM successfully Reset \n");
 		}
+	}
 	/* reread HTM status register */
 	status_reg = get_htm_status_reg(i_args.target, i_args.htm_type);
 	/* finally ready to get start going*/
@@ -397,15 +394,15 @@ uint64_t prepare_and_call_start(struct htm_args i_args){
 		if (!i_args.use_spr){
 			rc=htm_start(i_args.target, i_args.htm_type);
 			if (rc) {
-       				ERR("htm_start failed, rc=%d\n", rc);
-       				return -1;
-		        }else{
+				ERR("htm_start failed, rc=%d\n", rc);
+				return -1;
+			} else {
 				printf("HTM successfully Started \n");
-        		}
+			}
 		} else {
 			htm_start_mtspr();
 		}
-	}else{
+	} else {
 		printf ("STATUS REG %x \n", status_reg);
 		ERR("We are still not in HTM READY STATE FAILING \n");
 		return -1;
@@ -413,14 +410,15 @@ uint64_t prepare_and_call_start(struct htm_args i_args){
 	return 0;
 }
 
-uint64_t prepare_and_call_stop(struct htm_args i_args){
+uint64_t prepare_and_call_stop(struct htm_args i_args)
+{
 	int rc = 0;
 	if (! i_args.use_spr){
 		rc=htm_stop(i_args.target, i_args.htm_type);
 		if (rc) {
-        		ERR("htm_stop failed, rc=%d\n", rc);
-        		return -1;
-		}else{
+			ERR("htm_stop failed, rc=%d\n", rc);
+			return -1;
+		} else {
 			printf("HTM successfully Stopped \n");
 		}
 	} else {
@@ -480,9 +478,9 @@ int parse_mode(const char *arg)
 	else if (strcasecmp(arg, "llat") == 0) 
 		return HTM_LLAT;
 	else {
-	   perror("A valid HTM mode has not been selected\n");
-	   printf(" %s'n", arg);
-           exit(1);
+		perror("A valid HTM mode has not been selected\n");
+		printf(" %s'n", arg);
+		exit(1);
 	}
 }
 int main(int argc, char *argv[])
@@ -509,33 +507,33 @@ int main(int argc, char *argv[])
 	set_args.nowrap = false;
 	/*xscom_read(*/
 
-	
-   while(1) {
-                static struct option long_opts[] = {
-                        {"status",       no_argument,      NULL,   'A'},
-                        {"setup",      no_argument,      NULL,   'B'},   
-                        {"start",       no_argument,      NULL,   'C'},
-                        {"stop",        no_argument,      NULL,   'D'},
-                        {"reset",        no_argument,      NULL,   'E'},
-			{"list_cpus",        no_argument,      NULL,   'L'},
-                        {"nowrap",        no_argument,      NULL,   'F'},
-                        {"allocate",       no_argument,      NULL,   'G'},
-                        {"dump",       no_argument,      NULL,   'H'},
-                        {"precise",       no_argument,      NULL,   'I'},
-                        {"head",       no_argument,      NULL,   'J'},
-                        {"start_mtspr",        no_argument,      NULL,   'K'},
-                        {"stop_mtspr",        no_argument,      NULL,   'M'},
-                        {"mode",       required_argument,      NULL,   'o'},
-                        {"ex",       required_argument,      NULL,   'e'},
-			{"mark",         required_argument,      NULL,   'a'},
-			{"size",         required_argument,      NULL,   'z'},
-			{"cpu",         required_argument,      NULL,   'c'},
-			{"filename",     required_argument,      NULL,   'm'},
-			{"memsize",     required_argument,      NULL,   's'},
-			{"filter",     required_argument,      NULL,   'f'},
-			{"help",        no_argument,      NULL,   'h'},
-			{"verbose",        no_argument,      NULL,   'v'},
-			{NULL,0, 0, 0}
+
+	while(1) {
+	static struct option long_opts[] = {
+		{"status",      no_argument,      NULL,   'A'},
+		{"setup",       no_argument,      NULL,   'B'},
+		{"start",       no_argument,      NULL,   'C'},
+		{"stop",        no_argument,      NULL,   'D'},
+		{"reset",       no_argument,      NULL,   'E'},
+		{"list_cpus",   no_argument,      NULL,   'L'},
+		{"nowrap",      no_argument,      NULL,   'F'},
+		{"allocate",    no_argument,      NULL,   'G'},
+		{"dump",		no_argument,      NULL,   'H'},
+		{"precise",		no_argument,      NULL,   'I'},
+		{"head",		no_argument,      NULL,   'J'},
+		{"start_mtspr",	no_argument,      NULL,   'K'},
+		{"stop_mtspr",	no_argument,      NULL,   'M'},
+		{"mode",       	required_argument,      NULL,   'o'},
+		{"ex",       	required_argument,      NULL,   'e'},
+		{"mark",        required_argument,      NULL,   'a'},
+		{"size",        required_argument,      NULL,   'z'},
+		{"cpu",         required_argument,      NULL,   'c'},
+		{"filename",    required_argument,      NULL,   'm'},
+		{"memsize",     required_argument,      NULL,   's'},
+		{"filter",    	required_argument,      NULL,   'f'},
+		{"help",        no_argument,      NULL,   'h'},
+		{"verbose",     no_argument,      NULL,   'v'},
+		{NULL,0, 0, 0}
 
                 };
 	int c, oidx = 0;
