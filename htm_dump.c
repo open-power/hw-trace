@@ -91,7 +91,7 @@ int htm_dump(uint32_t i_target, char* filename, uint64_t start_addr, uint64_t du
 			bytes_read = read(fdin, buf, BUF_SIZE);
 		total_bytes += bytes_read;
 		bytes_written = write(fdout, buf, bytes_read);
-		if (!bytes_written){
+		if (bytes_written != bytes_read){
 			ERR("Error writing to file \n");
 			exit(1);
 		}
