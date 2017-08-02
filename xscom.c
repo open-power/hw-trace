@@ -114,7 +114,7 @@ static uint64_t xscom_mangle_addr(uint64_t addr)
 
 int xscom_read(uint32_t chip_id, uint64_t addr, uint64_t *val)
 {
-	struct xscom_chip *c = xscom_find_chip(chip_id);
+	struct xscom_chip *c = xscom_find_chip(chip_id >> 4);
 	int rc;
 
 	if (!c)
@@ -131,7 +131,7 @@ int xscom_read(uint32_t chip_id, uint64_t addr, uint64_t *val)
 
 int xscom_write(uint32_t chip_id, uint64_t addr, uint64_t val)
 {
-	struct xscom_chip *c = xscom_find_chip(chip_id);
+	struct xscom_chip *c = xscom_find_chip(chip_id >> 4);
 	int rc;
 
 	if (!c)
