@@ -14,7 +14,7 @@ compiler:
 addons:
   apt:
     packages:
-      - crossbuild-essential-powerpc
+      - gcc-powerpc-linux-gnu
 
 script:
   - make CC=/usr/bin/powerpc-linux-gnu-gcc
