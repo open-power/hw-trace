@@ -17,9 +17,8 @@ Development Environment
 A host GCC of at least 4.9 is recommended (all modern Linux distributions
 provide this).
 
-You can build on x86-64, ppc64 or ppc64le, you just need a powerpc64 (BE)
-cross compiler. The powerpc64le cross compilers packaged in Linux distributions
-can build BE code, so they are fine.
+You can build on x86-64, ppc64 or ppc64le, you just the target to be
+powerpc64le.
 
 Developer Certificate of Origin
 -------------------------------
