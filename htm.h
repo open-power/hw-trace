@@ -5,7 +5,6 @@
 #include <stdbool.h>
 
 extern bool verbose;
-extern bool dummy;
 
 /* Bit utilities */
 #define PPC_BIT(bit)            (0x8000000000000000UL >> (bit))

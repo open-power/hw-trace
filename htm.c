@@ -17,7 +17,6 @@
 
 
 bool verbose;
-bool dummy;
 
 #define SPR_PVR		0x11f
 #define MAX_NR_CPUS	1024
