@@ -35,7 +35,7 @@ int htm_allocate(uint64_t i_mem_size)
 	bytes_written = write(fd, buf, bytes_to_write);
 
 	if (bytes_written < bytes_to_write){
-		ERR("Error writing allocation size\n");
+		ERR("Error writing allocation size - wrote %zd/%zd bytes\n", bytes_written, bytes_to_write);
 		exit(1);
 	}
 	printf("allocation successful\n");
