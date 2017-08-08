@@ -1,0 +1,5 @@
+htm
+*.rej
+*.orig
+*.a
+*.o
