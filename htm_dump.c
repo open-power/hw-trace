@@ -34,8 +34,17 @@ bool is_wrapped(uint32_t i_target)
 		exit(1);
 	}
 
-	lseek(fdin, 8, SEEK_SET);
+	if (lseek(fdin, 8, SEEK_SET) < 0) {
+		perror("Seek failed");
+		exit(1);
+	}
+
 	bytes_read = read(fdin, buf, EYE_CATCH_SIZE);
+
+	if (bytes_read != EYE_CATCH_SIZE) {
+		ERR("Read only %d/%d bytes from %s", bytes_read, EYE_CATCH_SIZE, nbuf);
+		exit(1);
+	}
 
 	int i=0;
 	for (i = 0; i < EYE_CATCH_SIZE; i++){
