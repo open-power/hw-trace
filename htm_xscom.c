@@ -49,7 +49,7 @@ int htm_write_xscom(uint32_t i_ex_target, uint64_t addr, int i_htm_type, uint64_
                 break;
         case HTM_CORE:
         case HTM_LLAT:
-		printf("We are writing to target %d, addr %llx value %llx\n", i_ex_target, addr, val);
+		printf("We are writing to target %d, addr %lx value %lx\n", i_ex_target, addr, val);
                 rc=xscom_write(cpu_id, (CHTM_BASE+addr) + (l_ex_number*CORE_MULTIPLIER), val);
                 break;
         default:

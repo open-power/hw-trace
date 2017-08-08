@@ -173,7 +173,7 @@ int enable_core_mtspr(uint32_t i_chip_id)
 
 			data = data | HTM_ENABLE;
 
-			printf("I'm writing to %d data %llu \n", NCU_MODE_REG, data);
+			printf("I'm writing to %d data %lu \n", NCU_MODE_REG, data);
 			rc=xscom_write_ex(c->ex_target, NCU_MODE_REG, data);
 			DBG("Flipping HTM_ENABLE bit in NCU_MODE_REG \n");
 			if (rc) {
@@ -403,7 +403,7 @@ uint64_t prepare_and_call_start(struct htm_args i_args)
 			htm_start_mtspr();
 		}
 	} else {
-		printf ("STATUS REG %x \n", status_reg);
+		printf ("STATUS REG %lx \n", status_reg);
 		ERR("We are still not in HTM READY STATE FAILING \n");
 		return -1;
 	}
@@ -481,16 +481,15 @@ int parse_mode(const char *arg)
 		exit(1);
 	}
 }
+
 int main(int argc, char *argv[])
 {
 	struct htm_args set_args;
 	int rc;
-	uint64_t data = 0;
 	bool status = false;
 	bool dump = false;
 	bool filter = false;
 	bool tail = true;
-	bool use_spr = false;
 	uint32_t htm_type = HTM_FABRIC;
 	uint64_t memory_size=-1, dump_size=-1, start_addr=0, marker_val=0;
 	/*default to cpu 0 if not specified */

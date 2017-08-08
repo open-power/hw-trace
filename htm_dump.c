@@ -29,7 +29,7 @@ bool is_wrapped(uint32_t i_target)
 
 	fdin = open(nbuf, O_RDONLY);
 
-    if (fdin < 0) {
+	if (fdin < 0) {
 		perror("Failed to open input file");
 		exit(1);
 	}
@@ -40,7 +40,7 @@ bool is_wrapped(uint32_t i_target)
 	int i=0;
 	for (i = 0; i < EYE_CATCH_SIZE; i++){
 		if (test[i] != buf[i]){
-			printf("I read this %lx \n", buf[i]);
+			printf("I read this %x \n", buf[i]);
 			return true;
 		}
 	}

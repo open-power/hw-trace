@@ -72,7 +72,7 @@ int wait_until_ready(uint32_t i_target, int i_htm_type)
 			ERR("Timed out waiting for HTM_STAT_READY");
 			return -1;
 		}
-		printf("DATA RECEIVED %llx \n", data);
+		printf("DATA RECEIVED %lx \n", data);
 	} while(!(data & HTM_STAT_READY));
 	printf("Congratulations, HTM has reached ready state\n");
 	return 0;
@@ -318,7 +318,7 @@ int htm_setup(struct htm_args i_args)
 	data = 0;
 	data |= HTM_MODE_TRACE_ENABLE;
 	target_reg = 0x10010C0A + ((i_args.target & 0xf)*CORE_MULTIPLIER);
-	printf("we are targetting %llx with %llx \n",target_reg, data);
+	printf("we are targetting %lx with %lx \n",target_reg, data);
 	rc=xscom_write((i_args.target>>4), target_reg, data);
 	} else 	if (i_args.htm_type == HTM_FABRIC){
 		/* Set Trace mode to use fabric */
