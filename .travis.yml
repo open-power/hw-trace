@@ -1,0 +1,20 @@
+sudo: false
+dist: trusty
+
+git:
+  depth: 2
+
+language: c
+os:
+  - linux
+
+compiler:
+  - gcc
+
+addons:
+  apt:
+    packages:
+      - crossbuild-essential-powerpc
+
+script:
+  - make CC=/usr/bin/powerpc-linux-gnu-gcc
