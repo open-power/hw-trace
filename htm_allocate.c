@@ -16,28 +16,27 @@
 
 int htm_allocate(uint64_t i_mem_size)
 {
-	int fd;
-	ssize_t bytes_written = 0, bytes_to_write;
-	char nbuf[strlen(MEMTRACE_DIR)+16];
-	char buf[20];
+        int fd;
+	uint64_t bytes_written = 0;
+        char nbuf[strlen(MEMTRACE_DIR)+16];
+        char buf[20];
 
-	printf("mem size %lu\n", i_mem_size);
+	sprintf(buf,"%"PRIu64, i_mem_size);
+        snprintf(nbuf, sizeof(nbuf), "%s/%s", MEMTRACE_DIR, "enable");
+        fd = open(nbuf, O_WRONLY);
 
-	bytes_to_write = snprintf(buf, sizeof(buf), "%"PRIu64, i_mem_size);
-	snprintf(nbuf, sizeof(nbuf), "%s/%s", MEMTRACE_DIR, "enable");
-	fd = open(nbuf, O_WRONLY);
+        if (fd < 0) {
+                perror("Failed to open memtrace enable file");
+                exit(1);
+        }
 
-	if (fd < 0) {
-	perror("Failed to open memtrace enable file");
-	exit(1);
-	}
-
-	bytes_written = write(fd, buf, bytes_to_write);
-
-	if (bytes_written < bytes_to_write){
-		ERR("Error writing allocation size - wrote %zd/%zd bytes\n", bytes_written, bytes_to_write);
+        bytes_written = write(fd, buf, strlen(buf));
+	if (!bytes_written){
+		close(fd);
+		ERR("Error writing allocation size\n");
 		exit(1);
 	}
+	close(fd);	
 	printf("allocation successful\n");
         return 0;
 }

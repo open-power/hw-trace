@@ -1,3 +1,19 @@
+/* Copyright 2014-2016 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.
+ * See the License for the specific language governing permissions and
+ * imitations under the License.
+ */
+
 #define _LARGEFILE64_SOURCE
 #include <sys/mman.h>
 #include <string.h>
@@ -24,6 +40,14 @@ struct xscom_chip {
 	int			fd;
 };
 static struct xscom_chip *xscom_chips;
+
+void xscom_for_each_chip(void (*cb)(uint32_t chip_id))
+{
+	struct xscom_chip *c;
+
+	for (c = xscom_chips; c; c = c->next)
+		cb(c->chip_id);
+}
 
 static uint32_t xscom_add_chip(const char *base_path, const char *dname)
 {
@@ -107,14 +131,23 @@ static struct xscom_chip *xscom_find_chip(uint32_t chip_id)
 
 static uint64_t xscom_mangle_addr(uint64_t addr)
 {
-	if (addr & (1ull << 63))
-		addr |= (1ull << 59);
+	uint64_t tmp;
+
+	/*
+	 * Shift the top 4 bits (indirect mode) down by 4 bits so we
+	 * don't lose going through the debugfs interfaces.
+	 */
+	tmp = (addr & 0xf000000000000000) >> 4;
+	addr &= 0x00ffffffffffffff;
+	addr |= tmp;
+
+	/* Shift up by 3 for debugfs */
 	return addr << 3;
 }
 
 int xscom_read(uint32_t chip_id, uint64_t addr, uint64_t *val)
 {
-	struct xscom_chip *c = xscom_find_chip(chip_id >> 4);
+	struct xscom_chip *c = xscom_find_chip(chip_id);
 	int rc;
 
 	if (!c)
@@ -131,7 +164,7 @@ int xscom_read(uint32_t chip_id, uint64_t addr, uint64_t *val)
 
 int xscom_write(uint32_t chip_id, uint64_t addr, uint64_t val)
 {
-	struct xscom_chip *c = xscom_find_chip(chip_id >> 4);
+	struct xscom_chip *c = xscom_find_chip(chip_id);
 	int rc;
 
 	if (!c)
@@ -153,6 +186,7 @@ int xscom_read_ex(uint32_t ex_target_id, uint64_t addr, uint64_t *val)
 	addr |= (ex_target_id & 0xf) << 24;
 
 	/* XXX TODO: Special wakeup ? */
+
 	return xscom_read(chip_id, addr, val);
 }
 
@@ -165,6 +199,14 @@ int xscom_write_ex(uint32_t ex_target_id, uint64_t addr, uint64_t val)
 	/* XXX TODO: Special wakeup ? */
 
 	return xscom_write(chip_id, addr, val);
+}
+
+bool xscom_readable(uint64_t addr)
+{
+	/* Top nibble 9 indicates form 1 indirect, which is write only */
+	if (((addr >> 60) & 0xf) == 9)
+		return false;
+	return true;
 }
 
 uint32_t xscom_init(void)
