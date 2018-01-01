@@ -1,0 +1,123 @@
+						fabric htm command line tool for POWER9
+Version:
+0.9
+
+Changes over previous version (0.1):
+1) Generate a consolidated dump for nhtm0 and nhtm1. Subsequently, use the parser script to generate consolidated output for both nhtm0 and nhtm1.
+
+Installation:
+
+1) Download the .debs
+2) Install the debs.
+
+# sudo dpkg -i "*.debs"
+
+3) Reboot into the new 4.10.0-33 kernel. 
+Note that the .debs were built on a 4.10.0-33.37 Ubuntu Zesty kernel.
+
+4) Download htm_<version>.tar.gz
+5) 
+# tar -zxvf htm_<version>.tar.gz
+A README (this file) and the htm binary are extracted in the current path.
+Note that the htm binary was built on a ppc64le (a Ubuntu 4.10.0-33 kernel), so please
+make sure to run it on a le box. 
+If you need a be version, let me know and I can work on getting one over.
+
+Examples:
+1) Dry run
+# ./htm
+
+2) Start the dump for cpu 0
+# ./htm -c 0 --start
+
+3) Stop the dump
+# ./htm -c 0 --stop
+
+4) 
+a) Generate a single binary dump for both nhtm0 and nhtm1
+# ./htm -c 0 --dump --filename=/tmp/nhtm.out
+
+5) Parse the binary dump and generate a single consolidated readable output for both nhtm0 and nhtm1
+a) 
+# python parse_fabric.py /tmp/nhtm.out 
+
+This will generate the following: 
+/tmp/nhtm.out.formatted.sorted
+/tmp/nhtm.out_agg.formatted
+/tmp/nhtm.out_agg.log
+
+View the .sorted file to view the decoded output and the sequence.
+
+b) If the --match option is used,
+e.g.
+# python parse_fabric.py --match /tmp/nhtm.out
+
+the following files are generated:
+
+/tmp/nhtm.out.matched.sorted
+/tmp/nhtm.out_agg.matched
+/tmp/nhtm.out_agg.log
+
+The --match option matches cresps with the rcmds based on ttype and tsize.
+
+c) The --debug option prints out a lot of additional debug information as part of the parsing process, e.g.
+# python parse_fabric.py --debug /tmp/nhtm.out
+
+d) An additional --log option allows specifying an alternate log file.
+
+Example snapshot from an actual run:
+------------------------------------
+$ sudo ./htm -c 0 --start
+[sudo] password for toolsuser:
+Starting htm v2.8
+Entering init_cpus
+tergat is 0 cpu is 0 ex is0
+No Active allocations detected.  Setting default size of 256MB
+allocation successful
+No Active allocations detected.  Setting default size of 256MB
+allocation successful
+MC01PBI01 is valid and ready to go
+MC01PBI23 is valid and ready to go
+MC23PBI01 is valid and ready to go
+MC23PBI23 is valid and ready to go
+Target is still 0
+Trigger
+DATA RECEIVED (data) 20000000000000
+DATA RECEIVED (data1) 20000000000000
+Congratulations, HTM has reached ready state
+HTM successfully Started
+
+$ sudo ./htm -c 0 --stop
+Starting htm v2.8
+Entering init_cpus
+tergat is 0 cpu is 0 ex is0
+HTM successfully Stopped
+
+$ sudo ./htm -c 0 --dump --filename=/tmp/nhtm.out
+Starting htm v2.8
+Entering init_cpus
+tergat is 0 cpu is 0 ex is0
+start_addr0 0
+memory_size0 8d5e400
+User specified dump size 8d5e400
+start_addr1 0
+memory_size1 73bd480
+Max possible dump size 8d5e400
+I read this f8
+We have wrapped
+
+$ nohup python parse_fabric.py /tmp/nhtm.out > run.out 2>&1 &
+[1] 6277
+
+$ ls /tmp
+nhtm.out                nhtm.out_agg.log           
+nhtm.out_agg.formatted  nhtm.out.formatted.sorted
+
+
+Note:
+This version is tested for limited functionality.
+It has been validated against the output of a separate lab tool on a trace file that contains only rcmds: the sequence of commands as well as the decoded output match 1:1.
+Not all options in the tool's help are functional yet. Only the examples mentioned above may be attempted.
+
+Contact:
+Rajarshi Das (drajarshi@in.ibm.com)
