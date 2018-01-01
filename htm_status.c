@@ -46,8 +46,14 @@ void parse_htm_status(uint64_t stat_reg){
 	
 }
 void get_htm_status(uint32_t i_ex_target, int htm_type){
-	uint64_t htm_status_data, memory_size, memory_start;
+	uint64_t memory_size, memory_start;
+#ifndef P9
+	uint64_t htm_status_data;
 	htm_status_data = get_htm_status_reg(i_ex_target, htm_type);
+#else
+	uint64_t *htm_status_data_multi, *last_multi;
+	htm_status_data_multi = get_htm_status_reg_multi(i_ex_target, htm_type);
+#endif
 /*	printf("HTM STATUS REGISTER: %16" PRIx64 "\n",htm_status_data);*/
 	printf("---------------------------------------------\n");
 	memory_size = get_mem_size(i_ex_target >> 4);
@@ -56,9 +62,17 @@ void get_htm_status(uint32_t i_ex_target, int htm_type){
 	printf("Core: %d \n",i_ex_target & 0xff);
 	printf("Memory Start: 0x%"PRIx64" \n",memory_start);
 	printf("Memory Size:  %"PRId64"M\n",memory_size>>20);
+#ifdef P9
+	parse_htm_status(*htm_status_data_multi);
+	parse_htm_status(*((uint64_t*)(htm_status_data_multi + 1)));
+	printf("Status Reg: %"PRIx64" %"PRIx64"\n",*htm_status_data_multi, *((uint64_t*)(htm_status_data_multi + 1)));
+	last_multi = get_htm_last_reg_multi(i_ex_target, htm_type);
+	printf("HTM_LAST:  0x%"PRIx64" 0x%"PRIx64"\n", *last_multi, *((uint64_t*)(last_multi + 1)));
+#else
 	parse_htm_status(htm_status_data);
 	printf("Status Reg:  %"PRIx64"\n",htm_status_data);
 	printf("HTM_LAST:  0x%"PRIx64"\n",get_htm_last_reg(i_ex_target, htm_type));
+#endif
 	printf("---------------------------------------------\n");
 }
 
